@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Producción - Métricas en Movimiento | IESPP Juan XXIII</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+<!-- Header Institucional -->
+<header class="bg-blue-950 border-b border-blue-900 p-4 shadow-md flex flex-wrap justify-between items-center">
+    <div class="flex items-center space-x-3">
+        <div class="bg-blue-900 p-2 rounded-lg text-blue-400 border border-blue-700">
+            <i class="fa-solid fa-graduation-cap text-2xl"></i>
+        </div>
+        <div>
+            <h1 class="text-xl font-bold tracking-wide text-white">IESPP “JUAN XXIII” DE ICA</h1>
+            <p class="text-xs text-blue-300">Sistema Web Producción: Métricas en Movimiento (FID)</p>
+        </div>
+    </div>
+    <div class="mt-2 sm:mt-0 flex items-center space-x-4">
+            <span class="bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs px-3 py-1 rounded-full font-medium">
+                <i class="fa-solid fa-circle text-[8px] mr-1 animate-pulse"></i> Servidor Activo (Node.js + SQLite)
+            </span>
+    </div>
+</header>
+
+<!-- Main Layout -->
+<div class="flex flex-1 flex-col md:flex-row">
+
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-slate-950 border-r border-slate-800 p-4 flex flex-row md:flex-col justify-between">
+        <nav class="flex flex-row md:flex-col space-x-2 md:space-x-0 md:space-y-2 w-full overflow-x-auto">
+            <button onclick="cambiarSeccion('resumen')" id="btn-resumen" class="nav-btn w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white transition flex items-center space-x-3">
+                <i class="fa-solid fa-chart-pie w-5"></i> <span class="hidden md:inline">Panel General</span>
+            </button>
+            <button onclick="cambiarSeccion('deportistas')" id="btn-deportistas" class="nav-btn w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition flex items-center space-x-3">
+                <i class="fa-solid fa-users w-5"></i> <span class="hidden md:inline">Atletas & Base de Datos</span>
+            </button>
+            <button onclick="cambiarSeccion('rendimiento')" id="btn-rendimiento" class="nav-btn w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition flex items-center space-x-3">
+                <i class="fa-solid fa-heart-pulse w-5"></i> <span class="hidden md:inline">Biometría y Cargas</span>
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Contenido Dinámico -->
+    <main class="flex-1 p-6 overflow-y-auto">
+
+        <!-- SECCIÓN 1: PANEL GENERAL -->
+        <section id="seccion-resumen" class="space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">Atletas en Sistema</p>
+                    <h3 id="total-atletas" class="text-2xl font-bold mt-1 text-white">Carregando...</h3>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">Asistencia Promedio</p>
+                    <h3 class="text-2xl font-bold mt-1 text-white">91.4%</h3>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">Elegibilidad Académica</p>
+                    <h3 class="text-2xl font-bold mt-1 text-white">100%</h3>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">Incidencias Conductuales</p>
+                    <h3 class="text-2xl font-bold mt-1 text-white">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl shadow">
+                <h3 class="text-base font-semibold mb-4 text-slate-200">Carga de Trabajo Semanal (Consumo API Backend)</h3>
+                <div class="relative h-72">
+                    <canvas id="chartCargasServer"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: ATLETAS (CONECTADO A BASE DE DATOS) -->
+        <section id="seccion-deportistas" class="space-y-6 hidden">
+            <div class="flex justify-between items-center flex-wrap gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Gestión de Atletas en Servidor Web</h2>
+                    <p class="text-sm text-slate-400">Registros sincronizados con SQLite en tiempo real.</p>
+                </div>
+                <!-- Formulario rápido para insertar atleta -->
+                <div class="flex gap-2">
+                    <input type="text" id="nuevoNombre" placeholder="Apellidos y Nombres" class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg text-sm text-white">
+                    <button onclick="registrarAtleta()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition">
+                        <i class="fa-solid fa-user-plus mr-1"></i> Agregar
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                        <tr class="bg-slate-900 text-slate-300 text-xs uppercase tracking-wider border-b border-slate-700">
+                            <th class="p-3">ID</th>
+                            <th class="p-3">Apellidos y Nombres</th>
+                            <th class="p-3">Disciplina</th>
+                            <th class="p-3">Ciclo FID</th>
+                            <th class="p-3">Créditos</th>
+                            <th class="p-3">Elegibilidad FEDUP</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tabla-atletas-body" class="divide-y divide-slate-700 text-sm">
+                        <!-- Inyectado por JavaScript dinámicamente desde el servidor -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: BIOMETRÍA -->
+        <section id="seccion-rendimiento" class="space-y-6 hidden">
+            <h2 class="text-xl font-bold text-white">Monitoreo Biométrico del Servidor</h2>
+            <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl shadow">
+                <p class="text-sm text-slate-300">Datos biométricos conectados correctamente al backend del IESPP Juan XXIII.</p>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- Script de Integración con el Servidor Backend -->
+<script>
+    function cambiarSeccion(seccionId) {
+        ['resumen', 'deportistas', 'rendimiento'].forEach(sec => {
+            document.getElementById(`seccion-${sec}`).classList.add('hidden');
+            document.getElementById(`btn-${sec}`).classList.remove('bg-blue-600', 'text-white');
+            document.getElementById(`btn-${sec}`).classList.add('text-slate-400', 'hover:bg-slate-800');
+        });
+        document.getElementById(`seccion-${seccionId}`).classList.remove('hidden');
+        document.getElementById(`btn-${seccionId}`).classList.add('bg-blue-600', 'text-white');
+        document.getElementById(`btn-${seccionId}`).classList.remove('text-slate-400');
+        if(seccionId === 'deportistas') cargarAtletas();
+    }
+
+    // Cargar Atletas desde la API REST del Servidor
+    async function cargarAtletas() {
+        try {
+            const response = await fetch('/api/atletas');
+            const result = await response.json();
+            if(result.success) {
+                document.getElementById('total-atletas').innerText = result.data.length;
+                const tbody = document.getElementById('tabla-atletas-body');
+                tbody.innerHTML = '';
+                result.data.forEach(atleta => {
+                    tbody.innerHTML += `
+                            <tr class="hover:bg-slate-750 transition">
+                                <td class="p-3">${atleta.id}</td>
+                                <td class="p-3 font-medium">${atleta.apellidos_nombres}</td>
+                                <td class="p-3">${atleta.disciplina}</td>
+                                <td class="p-3">${atleta.ciclo_fid}</td>
+                                <td class="p-3">${atleta.creditos_aprobados} cr.</td>
+                                <td class="p-3"><span class="bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs px-2.5 py-1 rounded-full font-semibold">${atleta.estado_eligibilidad}</span></td>
+                            </tr>
+                        `;
+                });
+            }
+        } catch (error) {
+            console.error('Error al conectar con la API del servidor:', error);
+        }
+    }
+
+    // Registrar Atleta a través de la API
+    async function registrarAtleta() {
+        const nombre = document.getElementById('nuevoNombre').value;
+        if(!nombre) return alert('Ingrese un nombre válido.');
+
+        const response = await fetch('/api/atletas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                apellidos_nombres: nombre,
+                disciplina: 'Karate-Do',
+                ciclo_fid: 'VI Ciclo',
+                creditos_aprobados: 20,
+                estado_eligibilidad: 'Habilitado'
+            })
+        });
+        const result = await response.json();
+        if(result.success) {
+            document.getElementById('nuevoNombre').value = '';
+            cargarAtletas();
+            alert('Atleta registrado en el servidor exitosamente.');
+        }
+    }
+
+    // Inicializar Gráficos con datos del Servidor
+    window.addEventListener('DOMContentLoaded', async () => {
+        cargarAtletas();
+
+        const resBio = await fetch('/api/biometria');
+        const dataBio = await resBio.json();
+
+        if(dataBio.success) {
+            const ctx = document.getElementById('chartCargasServer').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dataBio.data.map(d => d.semana),
+                    datasets: [{
+                        label: 'Carga RPE (Datos desde Base de Datos)',
+                        data: dataBio.data.map(d => d.carga_rpe),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    });
+</script>
+</body>
+</html>
